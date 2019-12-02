@@ -346,8 +346,8 @@ class Data_Provider_Sep_2019(object):
 #        self.clean_list = sorted(glob(prefix+'clean_abs_*.h5'))
 #        self.dirrty_list = sorted(glob(prefix+'dirty_abs_*.h5'))
 
-        self.clean_list = [prefix+'clean_'+str(i)+'.h5' for i in range(92)]
-        self.dirty_list = [prefix+'dirty_'+str(i)+'.h5' for i in range(92)]
+        self.clean_list = [prefix+'clean_'+str(i)+'.h5' for i in range(100)]
+        self.dirty_list = [prefix+'dirty_'+str(i)+'.h5' for i in range(100)]
         
         n_clean = len(self.clean_list)
         n_dirty = len(self.dirty_list)
@@ -402,7 +402,7 @@ class Data_Provider_Sep_2019(object):
         self.train_call_time = 0
         self.valid_call_time = 0
 
-    def reload(self,inds):
+    def reload(self,inds,alpha = None):
         t0 = time()
         
         indsr = inds+0
@@ -418,11 +418,14 @@ class Data_Provider_Sep_2019(object):
             clean = read_h5file(self.clean_list[i])
             dirty = read_h5file(self.dirty_list[i])
             sigma = np.random.uniform(0.168,2*0.168)
-            alpha = 2**np.random.uniform(-10,0)
+            if alpha is None:
+                alpha = 2**np.random.uniform(-10,0)
+#                alpha = 2**np.random.uniform(-1,1)
             
 #            noise = np.random.normal(0,sigma,clean.shape)
             noise = complex_noise(clean,0,sigma)
-            dirty = clean + alpha * dirty + noise
+            rfi = alpha * dirty
+            dirty = clean + rfi + noise
             
             if not self.phase_in:
                 dirty = np.abs(dirty).astype(np.float32)
@@ -431,13 +434,13 @@ class Data_Provider_Sep_2019(object):
                                   np.angle(dirty).astype(np.float32)],axis=-1)
             
             if not self.phase_out:
-                clean = np.abs(clean).astype(np.float32)
+                rfi = np.abs(rfi).astype(np.float32)
             else:
-                clean = np.stack([np.abs(clean).astype(np.float32),
-                                  np.angle(clean).astype(np.float32)],axis=-1)
+                rfi = np.stack([np.abs(rfi).astype(np.float32),
+                                np.angle(rfi).astype(np.float32)],axis=-1)
 
             X.append(dirty)
-            Y.append(clean)
+            Y.append(rfi)
         X,Y = np.array(X),np.array(Y)
         X,Y = self.process(X,Y)
         
