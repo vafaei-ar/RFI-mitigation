@@ -1,5 +1,5 @@
 import os
-import h5py as h5
+import h5py
 import resource
 import numpy as np
 from time import time
@@ -8,46 +8,25 @@ from sys import getsizeof
 from random import shuffle
 #from sklearn.utils import shuffle
 
-#np.random.seed(0)
+np.random.seed(0)
 
 def open_h5file(filename):
-    #function to read HDF5 file format
-    return h5.File(filename,'r')
+	#function to read HDF5 file format
+	return h5py.File(filename,'r')
 
 def read_h5file(filename,dataset='dataset'):
-    #function to read a hdf5 file and output the array as a np.array
-    data = open_h5file(filename)
-    return data[dataset][()]
+	#function to read a hdf5 file and output the array as a np.array
+	data = open_h5file(filename)
+	dataset = list(data)[0]
+	return data[dataset][()]
 
 def save_h5file(savename,input_array,dataset='dataset'):
-    #function to save hdf5 
-    out = h5.File(savename, 'w')
-    out.create_dataset(dataset, data=input_array)
-    out.close()
+	#function to save hdf5 
+	out = h5py.File(savename, 'w')
+	out.create_dataset(dataset, data=input_array)
+	out.close()
+	return
 
-def extract_complex_vis(filename):
-    #function to extract complex dirty and clean visibility from chris sim data
-    data = open_h5file(filename)
-    group = data['output']
-    group_clean = group['vis_clean']
-    group_dirty = group['vis_dirty']
-    return group_clean[()],group_dirty[()]
-
-def smear(data,axis=0,check=0):
-    n_time = data.shape[axis]
-    nt = int(n_time//8)
-    sdata = np.array(np.split(data, nt, axis=axis))
-    #print(sdata.shape)
-
-    ## TO CHECK THE SMEARING WORKS RIGHT.
-    if check:
-        for i in range(nt):
-            dd = np.all(sdata[i,:,0,0,0]==data[i*8:i*8+8,0,0,0])
-            if not dd:
-                print(i)
-                
-    return np.mean(sdata,axis=axis+1)
-    
 def complex_noise(arr_in,mu,sigma,seed=0):
     #Function to create real and imaginary noise for an array.
     np.random.seed(seed)
@@ -72,25 +51,6 @@ def complex_noise(arr_in,mu,sigma,seed=0):
 #        idy = np.random.randint(0, ly - ny)            
 #        sly = slice(idy, (idy+ny))
 #    return x[slx, sly],y[slx, sly]
-
-eps = 1e-4
-def tfpnr(truth, pred):
-    pred = pred.astype(bool)
-    truth = truth.astype(bool)
-    npred = np.logical_not(pred)
-    pos = 1.*np.sum(pred)
-    neg = 1.*np.sum(npred)
-
-    tp = np.sum(truth[pred]==True)
-    #     fp = np.sum(truth[pred_mask]==False)
-    fp = pos-tp
-    tn = np.sum(truth[npred]==False)
-    #     fn = np.sum(truth[~pred_mask]==True)
-    fn = neg-tn
-
-    return tp,fp,tn,fn
-    
-
 
 class Data_Provider(object):
 
@@ -529,10 +489,9 @@ class Data_Provider_Sep_2019(object):
         
         return x,y
 
-    def get_test(self,alpha=None):
+    def get_test(self):
         i = self.inds_test[self.testcall]
-        print('Alpha is',alpha)
-        X_test,Y_test = self.reload(np.array([i]), alpha=alpha)
+        X_test,Y_test = self.reload(np.array([i]))
 #        print(X_test.shape,Y_test.shape)
         self.testcall = self.testcall+1
         

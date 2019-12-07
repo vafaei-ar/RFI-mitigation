@@ -1,53 +1,53 @@
 from glob import glob
 import h5py as h5
 import numpy as np
-#from sklearn.utils import shuffle
+from sklearn.utils import shuffle
 
-#def open_h5file(filename):
-#    #function to read HDF5 file format
-#    return h5.File(filename,'r')
+def open_h5file(filename):
+    #function to read HDF5 file format
+    return h5.File(filename,'r')
 
-#def read_h5file(filename,dataset='dataset'):
-#    #function to read a hdf5 file and output the array as a np.array
-#    data = open_h5file(filename)
-#    return data[dataset][()]
+def read_h5file(filename,dataset='dataset'):
+    #function to read a hdf5 file and output the array as a np.array
+    data = open_h5file(filename)
+    return data[dataset][()]
 
-#def save_h5file(savename,input_array,dataset='dataset'):
-#    #function to save hdf5 
-#    out = h5.File(savename, 'w')
-#    out.create_dataset(dataset, data=input_array)
-#    out.close()
+def save_h5file(savename,input_array,dataset='dataset'):
+    #function to save hdf5 
+    out = h5.File(savename, 'w')
+    out.create_dataset(dataset, data=input_array)
+    out.close()
 
-#def extract_complex_vis(filename):
-#    #function to extract complex dirty and clean visibility from chris sim data
-#    data = open_h5file(filename)
-#    group = data['output']
-#    group_clean = group['vis_clean']
-#    group_dirty = group['vis_dirty']
-#    return group_clean[()],group_dirty[()]
+def extract_complex_vis(filename):
+    #function to extract complex dirty and clean visibility from chris sim data
+    data = open_h5file(filename)
+    group = data['output']
+    group_clean = group['vis_clean']
+    group_dirty = group['vis_dirty']
+    return group_clean[()],group_dirty[()]
 
-#def smear(data,axis=0,check=0):
-#    n_time = data.shape[axis]
-#    nt = int(n_time//8)
-#    sdata = np.array(np.split(data, nt, axis=axis))
-#    #print(sdata.shape)
+def smear(data,axis=0,check=0):
+    n_time = data.shape[axis]
+    nt = int(n_time//8)
+    sdata = np.array(np.split(data, nt, axis=axis))
+    #print(sdata.shape)
 
-#    ## TO CHECK THE SMEARING WORKS RIGHT.
-#    if check:
-#        for i in range(nt):
-#            dd = np.all(sdata[i,:,0,0,0]==data[i*8:i*8+8,0,0,0])
-#            if not dd:
-#                print(i)
-#                
-#    return np.mean(sdata,axis=axis+1)
-#    
-#def complex_noise(arr_in,mu,sigma,seed=0):
-#    #Function to create real and imaginary noise for an array.
-#    np.random.seed(seed)
-#    real_part = np.random.normal(mu,sigma,arr_in.shape)
-#    im_part = np.random.normal(mu,sigma,arr_in.shape)
-#    noise = real_part + 1j*im_part
-#    return noise
+    ## TO CHECK THE SMEARING WORKS RIGHT.
+    if check:
+        for i in range(nt):
+            dd = np.all(sdata[i,:,0,0,0]==data[i*8:i*8+8,0,0,0])
+            if not dd:
+                print(i)
+                
+    return np.mean(sdata,axis=axis+1)
+    
+def complex_noise(arr_in,mu,sigma,seed=0):
+    #Function to create real and imaginary noise for an array.
+    np.random.seed(seed)
+    real_part = np.random.normal(mu,sigma,arr_in.shape)
+    im_part = np.random.normal(mu,sigma,arr_in.shape)
+    noise = real_part + 1j*im_part
+    return noise
     
 prefix = '../../data/RFI_data_Sep_2019/'
 baselines = 15
