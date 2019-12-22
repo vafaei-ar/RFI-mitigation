@@ -54,8 +54,8 @@ def loss_function(y_true,x_out):
     The loss function on which to optimize.
     
     Keyword arguments:
-    y_true -- ?
-    x_out  -- ?
+    y_true -- The ground truth
+    x_out  -- Prediction
     """
     ###loss = tf.reduce_mean(tf.pow(tf.log(y_true+1) - x_out, 2))
     ###loss = loss+tf.losses.get_regularization_loss()
@@ -121,7 +121,7 @@ def getArgs(passedArgs=None):
                         type=int, default=2000)
     parser.add_argument('--w2', required=False, help='Determines the freq. size for the window of the frequency-time images.', 
                         type=int, default=50)
-    parser.add_argument('--batch_size', required=False, help='?????', type=int, default=0)
+    parser.add_argument('--batch_size', required=False, help='Size of batch for the neural network.', type=int, default=0)
     parser.add_argument('--epochs', required=False, 
                         help='Set the number of training \'epochs\'. Not strictly an epoch due to data augmentation',
                         type=int, default=500)
@@ -233,7 +233,7 @@ def main(passedArgs=None):
         sess.run(init)
         ###exit()
     
-    #?
+    # These are size of vatches on memory, I calculated them to fin dthe best batch size according to GPU memory size.
     #60,15,4,1
     #8819MiB    1
     #7795MiB    2
