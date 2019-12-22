@@ -484,10 +484,6 @@ class Data_Provider_Sep_2019(object):
         X,Y = np.array(X),np.array(Y)
         X,Y = self.process(X,Y)
         
-        slices = get_slice(X,self.window)
-        X = slicer(X,slices)
-        Y = slicer(Y,slices)
-        
         if self.postprocess is not None:
             X,Y = self.postprocess(X,Y)
         
@@ -507,7 +503,11 @@ class Data_Provider_Sep_2019(object):
         np.random.shuffle(inds)
         inds = inds[:n]
         x,y = self.X_train[inds],self.Y_train[inds]
-        
+
+        slices = get_slice(x,self.window)
+        x = slicer(x,slices)
+        y = slicer(y,slices)
+       
         self.traincall = self.traincall+1
         self.train_call_time += time()-t0
         
