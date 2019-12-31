@@ -229,7 +229,7 @@ class Data_Provider_Jul_2019_2Channel(object):
 
 def the_print(text,style='bold',tc='gray',bgc='red'):
     """
-    prints table of formatted text format options
+    prints formatted text format options
     """
     colors = ['black','red','green','yellow','blue','purple','skyblue','gray']
     if style == 'bold':
@@ -380,17 +380,17 @@ class Data_Provider_Sep_2019(object):
                       process,
                       window = None,
                       n_batch=5,
-                      call_freq_train = 10,
-                      call_freq_valid = 10000,
+                      call_freq_train = 10, # Reload training set after this number of calling get_train method
+                      call_freq_valid = 10000, # Reload validation set after this number of calling get_valid method
                       split = [0.4,0.2,0.4],
                       phase_in = False,
                       phase_out = False,
-                      postprocess = None):
+                      postprocess = None): # post process might be needed sometimes. We don not need it now
     
 #        self.clean_list = sorted(glob(prefix+'clean_abs_*.h5'))
 #        self.dirrty_list = sorted(glob(prefix+'dirty_abs_*.h5'))
 
-        self.clean_list = [prefix+'clean_'+str(i)+'.h5' for i in range(100)]
+        self.clean_list = [prefix+'clean_'+str(i)+'.h5' for i in range(100)] #This needs to be set dynamically based on the number of files
         self.dirty_list = [prefix+'dirty_'+str(i)+'.h5' for i in range(100)]
         
         n_clean = len(self.clean_list)
@@ -408,7 +408,7 @@ class Data_Provider_Sep_2019(object):
         self.process = process
         self.postprocess = postprocess
         
-#        (100, 15, 4096, 4)
+        #The raw data has the shape of (100, 15, 4096, 4)
         x = read_h5file(self.clean_list[0])
         self.n_time, self.n_baseline, self.n_freq, self.n_pol = x.shape
 
@@ -447,8 +447,10 @@ class Data_Provider_Sep_2019(object):
         self.valid_call_time = 0
 
     def reload(self,inds,alpha = None):
+        #Looks like some kind of noise addition and shape manipulation of the data (the augmentation?) Yes, this method is reload data files and augment them randomly since we are not able to load whole files. For example after a certain number of calling get_train, this method will provide new augmented data.
         t0 = time()
         
+        #Take the index of images passed and then shuffle them and the 0 is to be sure about deep copy. 
         indsr = inds+0
 #        np.random.seed()
 #        np.random.shuffle(indsr)
@@ -460,17 +462,18 @@ class Data_Provider_Sep_2019(object):
         Y = []
         for i in indsr:      
             clean = read_h5file(self.clean_list[i])
-            dirty = read_h5file(self.dirty_list[i])
-            sigma = np.random.uniform(0.168,2*0.168)
+            rfi = read_h5file(self.dirty_list[i])#This data are JUST the RFI - would be a better name. 
+            sigma = np.random.uniform(0.168,2*0.168) #? - Why are these values chosen? The value is calculated by Chris. 
             if alpha is None:
-                alpha = 2**np.random.uniform(-10,0)
+                alpha = 2**np.random.uniform(-10,0) #? - What does 'alpha' represent / do / mean : It augments the amplitude of RFI
 #                alpha = 2**np.random.uniform(-1,1)
             
 #            noise = np.random.normal(0,sigma,clean.shape)
             noise = complex_noise(clean,0,sigma)
-            rfi = alpha * dirty
-            dirty = clean + rfi + noise
+            rfi = alpha * rfi #? - Why is this done? RFI amplitude augmentation
+            dirty = clean + rfi + noise #expands to clean + alpha*dirty + noise (where noise = gaussian noise mean of 0 std = sigma specified above)
             
+            #? - not sure what these two if blocks are doing : If we want to add phase as either in input or output. phase_in adds phase as channel to the images, so CNN will have phase information as well as absolute value of data. phase_out do the same to output, so CNN should learn to predict phase as well.
             if not self.phase_in:
                 dirty = np.abs(dirty).astype(np.float32)
             else:
@@ -503,10 +506,12 @@ class Data_Provider_Sep_2019(object):
             self.n_train = len(self.X_train)
 #            print(self.X_train.shape,self.Y_train.shape)
         t0 = time()
-        inds = np.arange(self.n_train)
+        
+        #Looks like gets a random index of the modified data as above and returns. yes.
+        inds = np.arange(self.n_train) #return evenly spaced values within a given interval
         np.random.shuffle(inds)
-        inds = inds[:n]
-        x,y = self.X_train[inds],self.Y_train[inds]
+        inds = inds[:n] #the amount of indices to slice is specified by n why does it change depending on the mode? N is not mode. N is the batch size. The above three lines are trying to choose a random set from available indices like you wrote bellow!
+        x,y = self.X_train[inds],self.Y_train[inds] #seems like get n random samples from the modified data
 
         slices = get_slice(x,self.window)
         x = slicer(x,slices)
@@ -516,17 +521,6 @@ class Data_Provider_Sep_2019(object):
         self.train_call_time += time()-t0
         
         return x,y
-
-    def check(self, n=1):
-        x,y = self.get_train(n)
-        for i in range(n):    
-            fig,(ax1,ax2) = plt.subplots(2,1,figsize=(12,5))
-            ax1.imshow(x[i,:,:,0],aspect='auto',norm=mpl.colors.LogNorm())
-            ax1.set_title('x')
-            ax2.imshow(y[i,:,:,0],aspect='auto')
-            ax2.set_title('y')
-            
-            plt.savefig('./dp_check'+str(i)+'.jpg') 
 
     def get_valid(self):
         if self.validcall % self.call_freq_valid==0:
@@ -556,6 +550,17 @@ class Data_Provider_Sep_2019(object):
         self.testcall = self.testcall+1
         
         return X_test,Y_test
+
+    def check(self, n=1):
+        x,y = self.get_train(n)
+        for i in range(n):    
+            fig,(ax1,ax2) = plt.subplots(2,1,figsize=(12,5))
+            ax1.imshow(x[i,:,:,0],aspect='auto',norm=mpl.colors.LogNorm())
+            ax1.set_title('x')
+            ax2.imshow(y[i,:,:,0],aspect='auto')
+            ax2.set_title('y')
+            
+            plt.savefig('./dp_check'+str(i)+'.jpg') 
         
     def __iter__(self):
         self.testcall = 0
