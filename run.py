@@ -180,7 +180,7 @@ def main(passedArgs=None):
                                 n_files=30,
                                 window=window,
                                 n_batch=10,
-                                call_freq_train = 50,   #? - What is the purpose of these two parameters
+                                call_freq_train = 50,   #? - What is the purpose of these two parameters, ali:answered in utils
                                 call_freq_valid = 20,
                                 #split = [n1,n1+n2],
                                 phase_in = phase_in,
@@ -188,8 +188,8 @@ def main(passedArgs=None):
                                 postprocess = None)
 
 
-    dsh = dp.get_train(1)[1].shape #dsh = data_shape?
-    nx,ny,n_chan = dsh[1],dsh[2],dsh[-1] #? - nx, ny = 'windowed' dimensions respectively?
+    dsh = dp.get_train(1)[1].shape #dsh = data_shape? ali:yes.
+    nx,ny,n_chan = dsh[1],dsh[2],dsh[-1] #? - nx, ny = 'windowed' dimensions respectively? ali: yes. 
 
     pfix = 'try'+n_try+'_' #The trailing number is the mode used
     model_add = './models/'+pfix+str(mode)
@@ -201,7 +201,7 @@ def main(passedArgs=None):
 
 
     x,y = dp.get_train(1)
-    print(x.shape,y.shape) #? - Does this still print out the self.n_time, self.n_baseline, self.n_freq, self.n_pol tuple?
+    print(x.shape,y.shape) #? - Does this still print out the self.n_time, self.n_baseline, self.n_freq, self.n_pol tuple? ali: no, it dependes on the chosen mode. For the first mode it retunes the n_batch x time x frequency x channel
 
 
     #input_img = Input(batch_shape=(None, 100, 4096, 1))
@@ -211,12 +211,12 @@ def main(passedArgs=None):
     learning_rate_var = tf.placeholder(tf.float32)
 
 
-    #? - What's the point of using an R-Net type topology if we only have 6 layers?
+    #? - What's the point of using an R-Net type topology if we only have 6 layers? ali: I checked shallower and deeper architectures and they was same or worse. But 6 is only a choice!
     x0 = conv(x_in)
     x1 = conv(x0)
     x2 = conv(x1)
     x3 = Add()([x2, x0])
-    #? - Why are we not using BatchNorm layer?
+    #? - Why are we not using BatchNorm layer? # I am not sure but batchnormalization leads to worse results. I guess there it has something to do with different versions of tensorflow, I have some theories but did not check them yet. 
     ###x4 = BatchNormalization()(x3,training=0)
     x5 = conv(x3)
     x_out = conv(x5,filters=n_chan)
@@ -250,7 +250,7 @@ def main(passedArgs=None):
 
 
     iterations = 10
-    if ns==0:   #ns = number_of_samples? Is set as the batch size or auto
+    if ns==0:   #ns = number_of_samples? Is set as the batch size or auto ali: if user does not change it from 0 the recommended number will be chosen
         auto_batch = [32,16,8,4]
         ns = auto_batch[mode-1]
 
@@ -260,34 +260,30 @@ def main(passedArgs=None):
     losst_min = 1000
 
     #Start actuall training
-    for epoch in range(training_epochs):    #? - Difference between an epoch and iteration? Why do it like this, for average loss?
+    for epoch in range(training_epochs):    #? - Difference between an epoch and iteration? Why do it like this, for average loss? # nothing real. Only to control epochs and verbose in smaller numbers. 
 
         #Loop over all batches
         learning_rate = learning_rate*decay_rate #each 'epoch' it decays
         cc = 0  #Summation counter for the 'c' variable what does it represent? -> Looks like loss amount
-        ii = 0  #? - Unclear why this ii variable is needed versus just using i? Since they both update at the same time
-        i = 0   #? - See above
+        ii = 0  #? - Unclear why this ii variable is needed versus just using i? Since they both update at the same time. This is some consideration from older simulations. nothing important now. 
 
         #Seems like uses 'iterations' amount of calls per learning_rate which corresponds to an 'epoch'
 
-        while i < iterations:
+        for i in range(iterations):
             xb, yb = dp.get_train(ns)
-            while xb is None:
-                xb,yb = dp.get_train(ns)  #Get train just return the training set and respective rfi (test) set
 
             # Run optimization op (backprop) and loss op (to get loss value)
-            #? - What does 'o' represent and why is it not used?
-            #? - Would 'current_loss' be a representative name for c?
+            #? - What does 'o' represent and why is it not used? ali: the optimizer outputs. We don't need them.
+            #? - Would 'current_loss' be a representative name for c? ali: yes. 
             o, c, pred = sess.run(fetches=[optimizer, loss, x_out],
                                    feed_dict={x_in: xb, y_true: yb,
                                               learning_rate_var: learning_rate,
                                               K.learning_phase(): 1})
-            i += 1
-            ii += 1
-            cc += c     #? - Likewise would 'cumalalitve_loss_per_epoch' be a representative name for cc?
 
-            if pred.std()==0: #? - What does this mean?
-                #? - If the model is re-initing for this epoch shouldn't cc, and ii (i) be set back to 0?
+            cc += c     #? - Likewise would 'cumalalitve_loss_per_epoch' be a representative name for cc? ali: yes
+
+            if pred.std()==0: #? - What does this mean? ali: since the labels are mostly zero, CNN might prefer to produce a whole zero image as output. To check this problem, std of the prediction is monitored. 
+                #? - If the model is re-initing for this epoch shouldn't cc, and ii (i) be set back to 0? ali: not really. because it might make an infinite loop.
                 print('The model is dead!')
                 init = tf.global_variables_initializer()
                 sess.run(init)
@@ -304,7 +300,7 @@ def main(passedArgs=None):
                 losst = sess.run(loss,
                                  feed_dict={x_in: xb,
                                             y_true: yb,
-                                            K.learning_phase(): 0})
+                                            K.learning_phase(): 1})
 
                 print('Validation, epoch:{:d}, loss= {:f}'.format(epoch, losst))
 
@@ -381,7 +377,7 @@ if __name__ == '__main__':
 #            break
 #        losst = sess.run([loss],
 #                       feed_dict={x_in: data, y_true: rfi,learning_rate_var: learning_rate,
-#                        K.learning_phase(): 0})
+#                        K.learning_phase(): 1})
 #        loss_list.append(losst)
 #    print(np.mean(loss_list),np.std(loss_list))
 
