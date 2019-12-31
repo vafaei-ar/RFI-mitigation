@@ -378,6 +378,7 @@ class Data_Provider_Sep_2019(object):
 
     def __init__(self,prefix,
                       process,
+                      n_files,
                       window = None,
                       n_batch=5,
                       call_freq_train = 10, # Reload training set after this number of calling get_train method
@@ -390,8 +391,8 @@ class Data_Provider_Sep_2019(object):
 #        self.clean_list = sorted(glob(prefix+'clean_abs_*.h5'))
 #        self.dirrty_list = sorted(glob(prefix+'dirty_abs_*.h5'))
 
-        self.clean_list = [prefix+'clean_'+str(i)+'.h5' for i in range(100)] #This needs to be set dynamically based on the number of files
-        self.dirty_list = [prefix+'dirty_'+str(i)+'.h5' for i in range(100)]
+        self.clean_list = [prefix+'clean_'+str(i)+'.h5' for i in range(n_files)] #This needs to be set dynamically based on the number of files
+        self.dirty_list = [prefix+'dirty_'+str(i)+'.h5' for i in range(n_files)]
         
         n_clean = len(self.clean_list)
         n_dirty = len(self.dirty_list)

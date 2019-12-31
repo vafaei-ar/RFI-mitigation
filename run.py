@@ -175,10 +175,10 @@ def main(passedArgs=None):
         return process(X,Y, mode=mode, phase_in=phase_in, phase_out=phase_out)
 
     #Create a new data provider instance
-    dp = Data_Provider_Sep_2019(nx=100,ny=200,
-                                prefix=dataset_add,
-                                window=window,
+    dp = Data_Provider_Sep_2019(prefix=dataset_add,
                                 process=pp,
+                                n_files=30,
+                                window=window,
                                 n_batch=10,
                                 call_freq_train = 50,   #? - What is the purpose of these two parameters
                                 call_freq_valid = 20,
