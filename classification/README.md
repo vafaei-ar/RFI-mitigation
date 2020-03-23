@@ -3,13 +3,13 @@
 This directory containes the developed scripts for RFI classification. The pipe line is demotestrated in the bellow figure:
 
 <p align="center">
-  <img src="../images/pipeline.jpg" width="400"/>
+  <img src="../images/pipeline.jpg" width="700"/>
 </p>
 
 A sample of the results on HIDE simulations are:
 
 <p align="center">
-  <img src="../images/samples.jpg" width="400"/>
+  <img src="../images/samples.jpg" width="600"/>
 </p>
 
 The files are as follows:
