@@ -22,3 +22,5 @@ The files are as follows:
 
 The rest of the files are scripts to train either R-net or U-net on HIDE, MeerKAT and KAT7 datasets. 
 
+The **trained models** will be shared after acceptance.
+
