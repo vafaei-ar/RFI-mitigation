@@ -24,3 +24,21 @@ The rest of the files are scripts to train either R-net or U-net on HIDE, MeerKA
 
 The **trained models** will be shared after acceptance.
 
+
+**Citing RFI-classification:** 
+```  
+@article{vafaei2020deep,
+  title={Deep learning improves identification of Radio Frequency Interference},
+  author={Vafaei Sadr, Alireza and Bassett, Bruce A and Oozeer, Nadeem and Fantaye, Yabebal and Finlay, Chris},
+  journal={Monthly Notices of the Royal Astronomical Society},
+  volume={499},
+  number={1},
+  pages={379--390},
+  year={2020},
+  publisher={Oxford University Press}
+}
+```
+
+
+
+
